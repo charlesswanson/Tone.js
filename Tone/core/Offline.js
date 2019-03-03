@@ -38,37 +38,56 @@ import "../core/Master";
  */
 Tone.Offline = function(callback, duration){
 	//set the OfflineAudioContext
+	console.log('DEBUG_TONE_OFFLINE new');
 	var sampleRate = Tone.context.sampleRate;
 	var originalContext = Tone.context;
 
-	var context = new Tone.OfflineContext(2, duration, sampleRate);
-	Tone.context = context;
+	var context = new Tone.OfflineContext(duration);
+	return context.init(2, sampleRate)
+		.then(() => {
+				Tone.context = context;
 
-	//invoke the callback/scheduling
-	var response = callback(Tone.Transport);
+				//invoke the callback/scheduling
+				var response = callback(Tone.Transport);
 
-	//the return value
-	var ret = null;
+				//the return value
+				var ret = null;
 
-	if (response && Tone.isFunction(response.then)){
-		//wait for the promise to resolve
-		ret = response.then(function(){
-			//then render the audio
-			return context.render();
+				if (response && Tone.isFunction(response.then)){
+					//wait for the promise to resolve
+					ret = response.then(function(){
+						//then render the audio
+						return context.render();
+					});
+				} else {
+					//process the audio
+					ret = context.render();
+				}
+
+				//return the original AudioContext
+				Tone.context = originalContext;
+
+				return ret;
+		})
+		.then((buffer) => {
+			//return the audio
+			console.log("DEBUG_TONE_OFFLINE offline context finished. typeof buffer is", typeof buffer);
+			const nonIframeAudioBuffer = new AudioBuffer({
+				length: buffer.length,
+				numberOfChannels: buffer.numberOfChannels,
+				sampleRate: buffer.sampleRate,
+			});
+			for (let i=0;i<buffer.numberOfChannels; i++) {
+				const nonIframeArray = new Float32Array(buffer.length);
+				buffer.copyFromChannel(nonIframeArray, i, 0);
+				nonIframeAudioBuffer.copyToChannel(nonIframeArray, i, 0);
+			}
+			return new Tone.Buffer(nonIframeAudioBuffer);
+		})
+		.finally(() => {
+			 context.destroy();
+			 context.close();
 		});
-	} else {
-		//process the audio
-		ret = context.render();
-	}
-
-	//return the original AudioContext
-	Tone.context = originalContext;
-
-	//return the audio
-	return ret.then(function(buffer){
-		//wrap it in a Tone.Buffer
-		return new Tone.Buffer(buffer);
-	});
 };
 
 export default Tone.Offline;

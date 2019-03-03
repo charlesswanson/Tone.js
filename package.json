@@ -13,6 +13,7 @@
   ],
   "scripts": {
     "build": "npm run increment && npm run collect:deps && webpack -p --env.production",
+    "build-dev": "npm run increment && npm run collect:deps && webpack -p --env.production --mode=development",
     "codecov": "codecov",
     "collect": "npm run collect:deps",
     "collect:deps": "node scripts/collect_deps.js",

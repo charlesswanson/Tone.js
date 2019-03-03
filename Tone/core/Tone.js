@@ -346,9 +346,9 @@ Tone.connect = function(srcNode, dstNode, outputNumber, inputNumber){
 	}
 
 	//make the connection
-	if (dstNode instanceof AudioParam){
+	if (Tone.instanceof(dstNode, AudioParam)){
 		srcNode.connect(dstNode, outputNumber);
-	} else if (dstNode instanceof AudioNode){
+	} else if (Tone.instanceof(dstNode, AudioNode)){
 		srcNode.connect(dstNode, outputNumber, inputNumber);
 	}
 
@@ -358,6 +358,25 @@ Tone.connect = function(srcNode, dstNode, outputNumber, inputNumber){
 ///////////////////////////////////////////////////////////////////////////
 // TYPE CHECKING
 ///////////////////////////////////////////////////////////////////////////
+
+Tone.instanceof = function(instance, ...types){
+	var result = types.find((tpe, index) => {
+		if (instance instanceof tpe) {
+			return true;
+		}
+		const offlineContext = Tone.OfflineContext;
+		if (!offlineContext) {
+			return false;
+		}
+		const iframe = offlineContext.iframe;
+		if (!iframe) {
+			return false;
+		}
+		const iframeType = iframe.contentWindow[tpe.name];
+		return iframeType && instance instanceof iframeType;
+	});
+	return !!result;
+};
 
 /**
  *  Test if the arg is undefined

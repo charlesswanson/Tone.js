@@ -61,7 +61,7 @@ Tone.Buffer = function(){
 	 */
 	this.onload = Tone.noOp;
 
-	if (options.url instanceof AudioBuffer || options.url instanceof Tone.Buffer){
+	if (Tone.instanceof(options.url, AudioBuffer, Tone.Buffer)){
 		this.set(options.url);
 		if (!this.loaded){
 			this.onload = options.onload;

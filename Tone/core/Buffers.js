@@ -3,11 +3,11 @@ import "../core/Buffer";
 
 /**
  *  @class A data structure for holding multiple buffers.
- *  
+ *
  *  @param  {Object|Array}    urls      An object literal or array
  *                                      of urls to load.
  *  @param  {Function=}  callback  The callback to invoke when
- *                                 the buffers are loaded. 
+ *                                 the buffers are loaded.
  *  @extends {Tone}
  *  @example
  * //load a whole bank of piano samples
@@ -71,7 +71,7 @@ Tone.Buffers.defaults = {
 
 /**
  *  True if the buffers object has a buffer by that name.
- *  @param  {String|Number}  name  The key or index of the 
+ *  @param  {String|Number}  name  The key or index of the
  *                                 buffer.
  *  @return  {Boolean}
  */
@@ -80,9 +80,9 @@ Tone.Buffers.prototype.has = function(name){
 };
 
 /**
- *  Get a buffer by name. If an array was loaded, 
+ *  Get a buffer by name. If an array was loaded,
  *  then use the array index.
- *  @param  {String|Number}  name  The key or index of the 
+ *  @param  {String|Number}  name  The key or index of the
  *                                 buffer.
  *  @return  {Tone.Buffer}
  */
@@ -96,7 +96,7 @@ Tone.Buffers.prototype.get = function(name){
 
 /**
  *  A buffer was loaded. decrement the counter.
- *  @param  {Function}  callback 
+ *  @param  {Function}  callback
  *  @private
  */
 Tone.Buffers.prototype._bufferLoaded = function(callback){
@@ -128,18 +128,35 @@ Object.defineProperty(Tone.Buffers.prototype, "loaded", {
  *  Add a buffer by name and url to the Buffers
  *  @param  {String}    name      A unique name to give
  *                                the buffer
- *  @param  {String|Tone.Buffer|Audiobuffer}  url  Either the url of the bufer, 
+ *  @param  {String|Tone.Buffer|Audiobuffer}  url  Either the url of the bufer,
  *                                                 or a buffer which will be added
  *                                                 with the given name.
- *  @param  {Function=}  callback  The callback to invoke 
+ *  @param  {Function=}  callback  The callback to invoke
  *                                 when the url is loaded.
  */
 Tone.Buffers.prototype.add = function(name, url, callback){
 	callback = Tone.defaultArg(callback, Tone.noOp);
-	if (url instanceof Tone.Buffer){
+
+
+	/***
+		* Update: 2/17: cancelling offline context doesn't work well (even when offline context from iframe). not allowing cancel
+		*
+		* Update 3/3:
+		* Iframe is created with a promise.
+		* Obvious memory leak is cleaned. Might still have small leak, but don't want to prematurely optimize.
+		* Memory leak fixed by copying AudioBuffer data provided by the iframe to allow iframe to cleanup.
+		*
+		* TODO: expose the offline audio context's progress while it is running
+		* 			I guess the parent will just do setInterval and periodically check currentTime
+		* 				https://github.com/WebAudio/web-audio-api/issues/302#issuecomment-310829366
+		*
+		* TODO: test how much the UI thread can lock up with huge data.
+		*/
+
+	if (Tone.instanceof(url, Tone.Buffer)) {
 		this._buffers[name] = url;
 		callback(this);
-	} else if (url instanceof AudioBuffer){
+	} else if (Tone.instanceof(url, AudioBuffer)){
 		this._buffers[name] = new Tone.Buffer(url);
 		callback(this);
 	} else if (Tone.isString(url)){
