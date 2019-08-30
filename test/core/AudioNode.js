@@ -11,6 +11,8 @@ import Offline from "helper/Offline";
 import Signal from "Tone/signal/Signal";
 import Supports from "helper/Supports";
 import StereoSignal from "helper/StereoSignal";
+import PanVol from "Tone/component/PanVol";
+import EQ3 from "Tone/component/EQ3";
 
 describe("AudioNode", function(){
 
@@ -139,10 +141,11 @@ describe("AudioNode", function(){
 			it("can disconnect based on output number", function(){
 				return Offline(function(){
 					var merge = new Merge().toMaster();
-					var split = new Split().connect(merge, 0, 0);
+					var split = new Split();
+					split.connect(merge, 0, 0);
 					split.connect(merge, 1, 1);
 					var sig = new Signal(3).connect(split);
-					split.disconnect(1);
+					split.disconnect(merge, 1);
 				}, 0.05, 2).then(function(buffer){
 					buffer.forEach(function(l, r){
 						expect(l).to.equal(3);
@@ -165,19 +168,51 @@ describe("AudioNode", function(){
 					});
 				});
 			});
+
+			it("can disconnect from input node 2 levels deep in PanVol", function(){
+				return Offline(function(){
+					var merge = new Merge().toMaster();
+					var split = new Split().connect(merge, 0, 0);
+					split.connect(merge, 1, 1);
+ 					var panvol = new PanVol().connect(split);
+					var sig = new Signal(3).connect(panvol);
+					sig.disconnect(panvol);
+ 				}, 0.05, 2).then(function(buffer){
+					buffer.forEach(function(l, r){
+						expect(l).to.equal(0);
+						expect(r).to.equal(0);
+					});
+				});
+			});
+
+ 			it("can disconnect from input node 3 levels deep in EQ3", function(){
+				return Offline(function(){
+					var merge = new Merge().toMaster();
+					var split = new Split().connect(merge, 0, 0);
+					split.connect(merge, 1, 1);
+ 					var eq3 = new EQ3().connect(split);
+					var sig = new Signal(3).connect(eq3);
+					sig.disconnect(eq3);
+ 				}, 0.05, 2).then(function(buffer){
+					buffer.forEach(function(l, r){
+						expect(l).to.equal(0);
+						expect(r).to.equal(0);
+					});
+				});
+			});
 		}
+
+		it("'connect' returns the node connecting to", function(){
+			var nodeA = Tone.context.createGain();
+			var nodeB = Tone.context.createGain();
+			expect(nodeA.connect(nodeB)).to.equal(nodeB);
+		});
 
 		it("connects two nodes", function(){
 			return PassAudio(function(input){
 				var node = new Gain().toMaster();
 				input.connect(node);
 			});
-		});
-
-		it("'connect' returns the node connecting to", function(){
-			var nodeA = Tone.context.createGain();
-			var nodeB = Tone.context.createGain();
-			expect(nodeA.connect(nodeB)).to.equal(nodeB);
 		});
 
 		it("can chain connections", function(){

@@ -249,6 +249,18 @@ describe("Envelope", function(){
 			});
 		});
 
+		it("can schedule an attack of time 0", function(){
+			return Offline(function(){
+				var env = new Envelope(0, 0.1);
+				env.toMaster();
+				env.triggerAttack(0.1);
+			}, 0.2).then(function(buffer){
+				expect(buffer.getValueAtTime(0)).to.be.closeTo(0, 0.001);
+				expect(buffer.getValueAtTime(0.0999)).to.be.closeTo(0, 0.001);
+				expect(buffer.getValueAtTime(0.1)).to.be.closeTo(1, 0.001);
+			});
+		});
+
 		it("correctly schedule a release", function(){
 			var e = {
 				attack : 0.001,
@@ -271,6 +283,21 @@ describe("Envelope", function(){
 				buffer.forEach(function(sample){
 					expect(sample).to.be.closeTo(0, 0.01);
 				}, releaseTime + e.release);
+			});
+		});
+
+		it("can retrigger a short attack at the same time as previous release", function(){
+			return Offline(function(){
+				var env = new Envelope(0.001, 0.1, 0.5);
+				env.attackCurve = 'linear'
+				env.toMaster();
+				env.triggerAttack(0)
+				env.triggerRelease(0.4)
+				env.triggerAttack(0.4)
+			}, 0.6).then(function(buffer){
+				expect(buffer.getValueAtTime(0.4)).be.closeTo(0.5, 0.01)
+				expect(buffer.getValueAtTime(0.40025)).be.closeTo(0.75, 0.01)
+				expect(buffer.getValueAtTime(0.4005)).be.closeTo(1, 0.01)
 			});
 		});
 

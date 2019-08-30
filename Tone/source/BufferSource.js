@@ -176,7 +176,6 @@ Tone.BufferSource.prototype.getStateAtTime = function(time){
  *                                is given, it will default to the full length
  *                                of the sample (minus any offset)
  *  @param  {Gain}  [gain=1]  The gain to play the buffer back at.
- *  @param  {Time=}  fadeInTime  The optional fadeIn ramp time.
  *  @return  {Tone.BufferSource}  this
  */
 Tone.BufferSource.prototype.start = function(time, offset, duration, gain){
@@ -245,9 +244,7 @@ Tone.BufferSource.prototype.start = function(time, offset, duration, gain){
 };
 
 /**
- *  Stop the buffer. Optionally add a ramp time to fade the
- *  buffer out. If there is a fadeOut ramp, the ramp starts at 
- *  the given time and ends at time + fadeOut. 
+ *  Stop the buffer. 
  *  @param  {Time=}  time         The time the buffer should stop.
  *  @return  {Tone.BufferSource}  this
  */
@@ -317,6 +314,15 @@ Tone.BufferSource.prototype._onended = function(){
 			this._source.stop(this._stopTime + additionalTail);
 		}
 		this.onended(this);
+
+		//dispose the source after it's come to a stop
+		setTimeout(function(){
+			//if it hasn't already been disposed
+			if (this._source){
+				this._source.disconnect();
+				this._gainNode.disconnect();
+			}
+		}.bind(this), additionalTail * 1000 + 100);
 	}
 };
 
@@ -386,18 +392,21 @@ Object.defineProperty(Tone.BufferSource.prototype, "loop", {
  *  @return  {Tone.BufferSource}  this
  */
 Tone.BufferSource.prototype.dispose = function(){
-	Tone.AudioNode.prototype.dispose.call(this);
-	this.onended = null;
-	this._source.onended = null;
-	this._source.disconnect();
-	this._source = null;
-	this._gainNode.dispose();
-	this._gainNode = null;
-	this._buffer.dispose();
-	this._buffer = null;
-	this._startTime = -1;
-	this.playbackRate = null;
-	Tone.context.clearTimeout(this._onendedTimeout);
+	if (!this._wasDisposed){
+		this._wasDisposed = true;
+		Tone.AudioNode.prototype.dispose.call(this);
+		this.onended = null;
+		this._source.onended = null;
+		this._source.disconnect();
+		this._source = null;
+		this._gainNode.dispose();
+		this._gainNode = null;
+		this._buffer.dispose();
+		this._buffer = null;
+		this._startTime = -1;
+		this.playbackRate = null;
+		Tone.context.clearTimeout(this._onendedTimeout);
+	}
 	return this;
 };
 

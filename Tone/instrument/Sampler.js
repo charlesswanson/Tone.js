@@ -117,7 +117,7 @@ Tone.Sampler.prototype._findClosest = function(midi){
 };
 
 /**
- * @param  {Frequency} note     The note to play
+ * @param  {(Frequency|Frequency[])} notes	The note to play, or an array of notes.
  * @param  {Time=} time     When to play the note
  * @param  {NormalRange=} velocity The velocity to play the sample back.
  * @return {Tone.Sampler}          this
@@ -163,7 +163,7 @@ Tone.Sampler.prototype.triggerAttack = function(notes, time, velocity){
 };
 
 /**
- * @param  {Frequency} note     The note to release.
+ * @param  {(Frequency|Frequency[])} notes	The note to release, or an array of notes.
  * @param  {Time=} time     	When to release the note.
  * @return {Tone.Sampler}	this
  */
@@ -176,9 +176,12 @@ Tone.Sampler.prototype.triggerRelease = function(notes, time){
 		var midi = Tone.Frequency(notes[i]).toMidi();
 		// find the note
 		if (this._activeSources[midi] && this._activeSources[midi].length){
-			var source = this._activeSources[midi].shift();
 			time = this.toSeconds(time);
-			source.stop(time);
+			//stop all the sources on that midi note
+			this._activeSources[midi].forEach(function(source){
+				source.stop(time);
+			});
+			this._activeSources[midi] = [];
 		}
 	}
 
@@ -224,7 +227,7 @@ Tone.Sampler.prototype.sync = function(){
 
 /**
  * Invoke the attack phase, then after the duration, invoke the release.
- * @param  {(Frequency|Frequency[])} note     The note to play
+ * @param  {(Frequency|Frequency[])} notes	The note to play and release, or an array of notes.
  * @param  {(Time|Time[])} duration The time the note should be held
  * @param  {Time=} time     When to start the attack
  * @param  {NormalRange} [velocity=1] The velocity of the attack
@@ -297,4 +300,3 @@ Tone.Sampler.prototype.dispose = function(){
 };
 
 export default Tone.Sampler;
-

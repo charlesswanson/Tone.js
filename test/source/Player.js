@@ -108,13 +108,16 @@ describe("Player", function(){
 
 		it("can be played in reverse", function(){
 			var audioBuffer = buffer.get().getChannelData(0);
-			var lastSample = audioBuffer[audioBuffer.length - 1];
+			var jump = 441;
+			var lastSample = audioBuffer[audioBuffer.length - 1 - jump];
 			return Offline(function(){
-				var player = new Player(buffer.get()).toMaster();
-				player.reverse = true;
+				var player = new Player({
+					url : buffer.get(),
+					reverse : true
+				}).toMaster();
 				player.start(0);
 			}).then(function(buffer){
-				var firstSample = buffer.toArray()[0];
+				var firstSample = buffer.toArray()[jump];
 				expect(firstSample).to.equal(lastSample);
 			});
 		});
@@ -444,6 +447,24 @@ describe("Player", function(){
 				Transport.start(0, 0.03125);
 			}, 0.05).then(function(buffer){
 				expect(buffer.toArray()[0]).to.equal(testSample);
+			});
+		});
+
+		it("starts at the correct position when Transport is offset and playbackRate is not 1", function(){
+			return Offline(function(Transport){
+				//make a ramp between 0-1
+				var ramp = new Float32Array(Math.floor(Tone.context.sampleRate * 0.3));
+				for (var i = 0; i < ramp.length; i++){
+					ramp[i] = (i / (ramp.length));
+				}
+				var buff = Buffer.fromArray(ramp);
+				var player = new Player(buff).toMaster();
+				player.playbackRate = 0.5;
+				player.sync().start(0);
+				//start halfway through
+				Transport.start(0, 0.15);
+			}, 0.05).then(function(buffer){
+				expect(buffer.getValueAtTime(0)).to.be.closeTo(0.25, 0.03);
 			});
 		});
 

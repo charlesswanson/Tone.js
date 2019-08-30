@@ -1,5 +1,11 @@
+### 13.8.24
+
 * Moving to common.js-style code
-* Including tone.d.ts in builds (still WIP)
+
+**Breaking Changes**
+
+* AudioNode.prototype.connect is no longer overwritten. This means that you can no longer connect native nodes to Tone.js Nodes.
+* Tone.connect(srcNode, destNode, [ouputNum], [inputNum]) is the way to connect native Web Audio nodes with Tone.js nodes. 
 
 ### 13.4.9
 

@@ -105,6 +105,10 @@ Tone.Buffer.prototype.set = function(buffer){
 	} else {
 		this._buffer = buffer;
 	}
+	//reverse it initially
+	if (this._reversed){
+		this._reverse();
+	}
 	return this;
 };
 

@@ -3,6 +3,9 @@ import "../core/Emitter";
 import "../core/Timeline";
 import "../shim/AudioContext";
 
+var AudioContextProperties = ["baseLatency", "destination", "currentTime", "sampleRate", "listener", "state"];
+var AudioContextMethods = ["suspend", "close", "resume", "getOutputTimestamp", "createMediaElementSource", "createMediaStreamSource", "createMediaStreamDestination", "createBuffer", "decodeAudioData", "createBufferSource", "createConstantSource", "createGain", "createDelay", "createBiquadFilter", "createIIRFilter", "createWaveShaper", "createPanner", "createConvolver", "createDynamicsCompressor", "createAnalyser", "createScriptProcessor", "createStereoPanner", "createOscillator", "createPeriodicWave", "createChannelSplitter", "createChannelMerger", "audioWorklet"];
+
 /**
  *  @class Wrapper around the native AudioContext.
  *  @extends {Tone.Emitter}
@@ -25,10 +28,15 @@ Tone.Context = function(){
 	while (this._context.rawContext){
 		this._context = this._context.rawContext;
 	}
-	// extend all of the methods
-	for (var prop in this._context){
+
+	// extend all of the properties
+	AudioContextProperties.forEach(function(prop){
 		this._defineProperty(this._context, prop);
-	}
+	}.bind(this));
+	// extend all of the methods
+	AudioContextMethods.forEach(function(method){
+		this._defineMethod(this._context, method);
+	}.bind(this));
 
 	/**
 	 *  The default latency hint
@@ -127,14 +135,27 @@ Tone.Context.prototype._defineProperty = function(context, prop){
 	if (Tone.isUndef(this[prop])){
 		Object.defineProperty(this, prop, {
 			"get" : function(){
-				if (typeof context[prop] === "function"){
-					return context[prop].bind(context);
-				} else {
-					return context[prop];
-				}
+				return context[prop];
 			},
 			"set" : function(val){
 				context[prop] = val;
+			}
+		});
+	}
+};
+
+/**
+ *  Define a method on this Tone.Context.
+ *  This is used to extend the native AudioContext
+ *  @param  {AudioContext}  context
+ *  @param  {String}  prop
+ *  @private
+ */
+Tone.Context.prototype._defineMethod = function(context, prop){
+	if (Tone.isUndef(this[prop])){
+		Object.defineProperty(this, prop, {
+			"get" : function(){
+				return context[prop].bind(context);
 			}
 		});
 	}
@@ -541,65 +562,6 @@ Ticker.prototype.dispose = function(){
 	this._callback = null;
 };
 
-/**
- *  Adds connect/disconnect methods
- *  @private
- */
-Tone.getContext(function(){
-
-	var nativeConnect = AudioNode.prototype.connect;
-	var nativeDisconnect = AudioNode.prototype.disconnect;
-
-	//replace the old connect method
-	function toneConnect(B, outNum, inNum){
-		if (B.input){
-			inNum = Tone.defaultArg(inNum, 0);
-			if (Tone.isArray(B.input)){
-				return this.connect(B.input[inNum]);
-			} else {
-				return this.connect(B.input, outNum, inNum);
-			}
-		} else {
-			try {
-				if (B instanceof AudioNode){
-					nativeConnect.call(this, B, outNum, inNum);
-					return B;
-				} else {
-					nativeConnect.call(this, B, outNum);
-					return B;
-				}
-			} catch (e){
-				throw new Error("error connecting to node: "+B+"\n"+e);
-			}
-		}
-	}
-
-	//replace the old disconnect method
-	function toneDisconnect(B, outNum, inNum){
-		if (B && B.input && Tone.isArray(B.input)){
-			inNum = Tone.defaultArg(inNum, 0);
-			this.disconnect(B.input[inNum], outNum, 0);
-		} else if (B && B.input){
-			this.disconnect(B.input, outNum, inNum);
-		} else {
-			try {
-				if (B instanceof AudioParam){
-					nativeDisconnect.call(this, B, outNum);
-				} else {
-					nativeDisconnect.apply(this, arguments);
-				}
-			} catch (e){
-				throw new Error("error disconnecting node: "+B+"\n"+e);
-			}
-		}
-	}
-
-	if (AudioNode.prototype.connect !== toneConnect){
-		AudioNode.prototype.connect = toneConnect;
-		AudioNode.prototype.disconnect = toneDisconnect;
-	}
-});
-
 // set the audio context initially, and if one is not already created
 if (Tone.supported && !Tone.initialized){			
 	if (!Tone.global.TONE_AUDIO_CONTEXT){
@@ -609,7 +571,7 @@ if (Tone.supported && !Tone.initialized){
 
 	// log on first initialization
 	// allow optional silencing of this log
-	if (!Tone.global.TONE_SILENCE_VERSION_LOGGING){
+	if (!Tone.global.TONE_SILENCE_LOGGING){
 		var prefix = "v";
 		if (Tone.version === "dev"){
 			prefix = "";
@@ -618,7 +580,7 @@ if (Tone.supported && !Tone.initialized){
 		// eslint-disable-next-line no-console
 		console.log("%c" + printString, "background: #000; color: #fff");
 	}
-} else if (!Tone.supported){
+} else if (!Tone.supported && !Tone.global.TONE_SILENCE_LOGGING){
 	// eslint-disable-next-line no-console
 	console.warn("This browser does not support Tone.js");
 }
