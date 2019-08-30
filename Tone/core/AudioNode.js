@@ -226,13 +226,14 @@ Tone.AudioNode.prototype.fan = function(){
  */
 Tone.AudioNode.prototype.dispose = function(){
 	if (Tone.isDefined(this.input)){
-		if (this.input instanceof AudioNode){
+
+		if (Tone.instanceof(this.input, AudioNode)){
 			this.input.disconnect();
 		}
 		this.input = null;
 	}
 	if (Tone.isDefined(this.output)){
-		if (this.output instanceof AudioNode){
+			if (Tone.instanceof(this.output, AudioNode)){
 			this.output.disconnect();
 		}
 		this.output = null;

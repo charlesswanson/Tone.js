@@ -106,7 +106,7 @@ Tone.prototype.set = function(params, value){
 			if (param.value !== value){
 				param.value = value;
 			}
-		} else if (param instanceof AudioParam){
+		} else if (Tone.instanceof(param, AudioParam)){
 			if (param.value !== value){
 				param.value = value;
 			}
@@ -170,7 +170,7 @@ Tone.prototype.get = function(params){
 			subRet[attr] = param.value;
 		} else if (Tone.Param && param instanceof Tone.Param){
 			subRet[attr] = param.value;
-		} else if (param instanceof AudioParam){
+		} else if (Tone.instanceof(param, AudioParam)){
 			subRet[attr] = param.value;
 		} else if (param instanceof Tone){
 			subRet[attr] = param.get();
@@ -388,9 +388,9 @@ Tone.disconnect = function(srcNode, dstNode, outputNumber, inputNumber){
 		}
 	
 		//make the connection
-		if (dstNode instanceof AudioParam){
+	if (Tone.instanceof(dstNode, AudioParam)){
 			srcNode.disconnect(dstNode, outputNumber);
-		} else if (dstNode instanceof AudioNode){
+		} else if (Tone.instanceof(dstNode, AudioNode)){
 			srcNode.disconnect(dstNode, outputNumber, inputNumber);
 		}
 	} else {

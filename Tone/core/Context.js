@@ -190,7 +190,7 @@ Object.defineProperty(Tone.Context.prototype, "destination", {
  *  @return  {Promise}
  */
 Tone.Context.prototype.resume = function(){
-	if (this._context.state === "suspended" && this._context instanceof AudioContext){
+	if (this._context.state === "suspended" && Tone.instanceof(this._context, AudioContext)) {
 		return this._context.resume();
 	} else {
 		return Promise.resolve();

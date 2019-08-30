@@ -52,7 +52,7 @@ Tone.Player = function(url){
 		"onload" : this._onload.bind(this, options.onload),
 		"reverse" : options.reverse
 	});
-	if (url instanceof AudioBuffer){
+	if (Tone.instanceof(url, AudioBuffer)){
 		this._buffer.set(url);
 	}
 

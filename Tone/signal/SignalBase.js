@@ -34,7 +34,7 @@ Tone.SignalBase.prototype.connect = function(node, outputNumber, inputNumber){
 		node._param.setValueAtTime(0, 0);
 		//mark the value as overridden
 		node.overridden = true;
-	} else if (node instanceof AudioParam){
+	} else if (Tone.instanceof(node, AudioParam)){
 		node.cancelScheduledValues(0);
 		node.setValueAtTime(0, 0);
 	}
