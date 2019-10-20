@@ -12,6 +12,7 @@
     "Tone"
   ],
   "scripts": {
+    "prepare": "npm run build",
     "build": "npm run increment && npm run collect:deps && webpack -p --env.production",
     "build-dev": "npm run increment && npm run collect:deps && webpack -p --env.production --mode=development",
     "codecov": "codecov",
