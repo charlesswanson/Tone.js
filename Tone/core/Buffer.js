@@ -477,7 +477,7 @@ Tone.Buffer.load = function(url, onload, onerror){
 
 	request.addEventListener("load", function(){
 
-		if (request.status === 200){
+		if (request.status === 200 || request.status === 206){
 			Tone.context.decodeAudioData(request.response).then(function(buff){
 
 				request.progress = 1;
